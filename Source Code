@@ -1,0 +1,75 @@
+#include "dht11.h"
+#include "iot.h"
+DHT;
+#include <LiquidCrystal.h>
+
+void iot_send(String s);
+#define soil 3
+#define water A1
+#define Motor_soil 5
+#define Motor_water 6
+LiquidCrystal lcd(13, 12, 11, 10, 9, 8);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(3, INPUT_PULLUP);
+  pinMode(A1, INPUT);
+  pinMode(Motor_soil, OUTPUT);
+  pinMode(Motor_water, OUTPUT);
+  digitalWrite(Motor_soil, LOW);
+  digitalWrite(Motor_water, LOW);
+  lcd.begin(16, 2);
+  lcd.setCursor(0, 0);
+  lcd.print("AGRICULTURE FIELD");
+  delay(1000);
+}
+
+void loop() {
+
+  dht.dht_read(2);
+  Serial.println(dht.temperature);
+  if (dht.temperature > 33) {
+    iot_send("*temp normal#");
+  } else {
+    iot_send("*temp high#");
+  }
+
+  int soil_pin = digitalRead(3);
+  Serial.println(soil_pin);
+  int wate_data = analogRead(A1);
+  Serial.println(wate_data);
+  lcd.setCursor(0, 0);
+  lcd.print("AGRICULTUR FIELD");
+  lcd.setCursor(0, 1);
+  lcd.print("SL Q:");
+  lcd.setCursor(8, 1);
+  lcd.print("WT L:");
+  if (soil_pin == 1) {
+    lcd.setCursor(5, 1);
+    lcd.print("LOW");
+    iot_send("*SOIL WATER LOW#");
+    digitalWrite(Motor_soil, HIGH);
+    digitalWrite(Motor_water, HIGH);
+
+  } else {
+    lcd.setCursor(5, 1);
+    lcd.print("OK");
+    digitalWrite(Motor_soil, LOW);
+    digitalWrite(Motor_water, LOW);
+  }
+  if (wate_data <= 100) {
+    lcd.setCursor(13, 1);
+    lcd.print("LOW");
+    iot_send("*WATER LEVAL LOW#");
+    digitalWrite(Motor_soil, HIGH);
+
+    digitalWrite(Motor_water, HIGH);
+  } else {
+    lcd.setCursor(13, 1);
+    lcd.print("OK");
+    digitalWrite(Motor_soil, LOW);
+
+    digitalWrite(Motor_water, LOW);
+  }
+  delay(500);
+}
